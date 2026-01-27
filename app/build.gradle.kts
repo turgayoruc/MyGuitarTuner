@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.myguitartuner"
-        minSdk = 24
+        minSdk = 33
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -62,4 +62,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     implementation("androidx.navigation:navigation-compose:2.7.7") // ViewModel icin
     implementation("androidx.compose.runtime:runtime-livedata:1.9.5") // LiveData icin
+    implementation("androidx.activity:activity-ktx:1.3.1")//RequestPermission icin
+
+
+
 }
