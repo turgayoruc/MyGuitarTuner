@@ -1,19 +1,11 @@
 package com.example.myguitartuner
 
-import android.R
 import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.util.Log
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.DoneSegment
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +17,7 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
 
     fun startTuning() {
 
+       // val bufferSize=8192
         val bufferSize = AudioRecord.getMinBufferSize(
             sampleRate, // sampleRateInHz
             AudioFormat.CHANNEL_IN_MONO,
@@ -53,14 +46,14 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
                         signal[i] = audioBuffer[i].toDouble()
                     }
                     removeDC(signal)
-                    val pitchHz = autoCorrelate(signal, sampleRate)
+                    val pitch = autoCorrelate(signal, sampleRate)
 
                     withContext(Dispatchers.Main){
-                        //  viewModel.updatePitch(pitchHz.toInt())
-                        ////viewModel.updateAudioBuffer(pitchHz.toString())
-                      for (i in 0..100){
-                          delay(500)
-                          viewModel.updatePitch(10*i.toInt())}
+                          viewModel.updatePitch(pitch.toInt())
+                       // viewModel.updateAudioBuffer(pitchHz.toString())
+//                      for (i in 0..200){
+//                          delay(50)
+//                          viewModel.updatePitch(i.toInt())}
                     }
                 }
             }
@@ -74,30 +67,75 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
         }
     }
 
-
+    var sonGecerliDeger=0.0
     fun autoCorrelate(signal: DoubleArray, sampleRate: Int): Double {
         val size = signal.size
-        var bestLag = 0
-        var bestCorr = 0.0
 
-        // Gitar frekansları için lag sınırı
-        val minLag = sampleRate / 1200   // ~36
-        val maxLag = sampleRate / 80     // ~551
+        // 1. ADIM: Ses Seviyesi Kontrolü (Gürültü Kapısı / Noise Gate)
+        // Sinyalin ortalama mutlak değerine bakalım.
+        var sumAbs = 0.0
+        for (s in signal) sumAbs += Math.abs(s)
+        val averageAbs = sumAbs / size
 
+        // Eğer ses seviyesi çok düşükse (sessiz ortam), işlemi direkt iptal et.
+        // 500.0 değerini cihazına göre 200 ile 1000 arasında test ederek ayarlayabilirsin.
+        if (averageAbs < 500.0) return sonGecerliDeger
+
+        var bestLag = -1
+        var maxCorr = -1.0
+
+        val minLag = sampleRate / 1000 // Üst sınır (1000Hz)
+        val maxLag = sampleRate / 30   // Alt sınır (70Hz - Gitarın en kalın teli için)
+
+        // 2. ADIM: Korelasyon Hesaplama
         for (lag in minLag..maxLag) {
-            var sum = 0.0
+            var corr = 0.0
             for (i in 0 until size - lag) {
-                sum += signal[i] * signal[i + lag]
+                corr += signal[i] * signal[i + lag]
             }
 
-            if (sum > bestCorr) {
-                bestCorr = sum
+            if (corr > maxCorr) {
+                maxCorr = corr
                 bestLag = lag
             }
         }
 
-        return if (bestLag == 0) 0.0 else sampleRate.toDouble() / bestLag
+        // 3. ADIM: Kalite Kontrolü (Confidence)
+        // Sinyalin sıfır kaydırmadaki (lag=0) kendi enerjisiyle karşılaştırıyoruz.
+        var energy = 0.0
+        for (i in 0 until size) energy += signal[i] * signal[i]
+
+        val confidence = if (energy > 0) maxCorr / energy else 0.0
+        if (confidence > 0.70 && bestLag != -1) {
+           sonGecerliDeger= sampleRate.toDouble() / bestLag}
+        // Gitar notası için confidence genelde 0.85 ve üzeridir.
+        // Gürültüde bu oran çok düşer. 0.70 güvenli bir sınır.
+        return if (confidence > 0.70 && bestLag != -1) {sonGecerliDeger} else { 0.0 }
     }
+
+//    fun autoCorrelate(signal: DoubleArray, sampleRate: Int): Double {
+//        val size = signal.size
+//        var bestLag = 0
+//        var bestCorr = 0.0
+//
+//        // Gitar frekansları için lag sınırı
+//        val minLag = sampleRate / 1200   // ~36
+//        val maxLag = sampleRate / 80     // ~551
+//
+//        for (lag in minLag..maxLag) {
+//            var sum = 0.0
+//            for (i in 0 until size - lag) {
+//                sum += signal[i] * signal[i + lag]
+//            }
+//
+//            if (sum > bestCorr) {
+//                bestCorr = sum
+//                bestLag = lag
+//            }
+//        }
+//
+//        return if (bestLag == 0) 0.0 else sampleRate.toDouble() / bestLag
+//    }
 
 
 

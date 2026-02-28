@@ -5,43 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 
-import kotlin.compareTo
-import kotlin.run
-
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import com.example.myguitartuner.AudioEngine
-import com.example.myguitartuner.ui.theme.MyGuitarTunerTheme
-import java.lang.reflect.Method
+import androidx.compose.ui.graphics.Color
+import com.example.myguitartuner.ui.theme.kremRengi
 
 
 class MainViewModel : ViewModel() {
@@ -52,6 +17,11 @@ class MainViewModel : ViewModel() {
     val pitch: MutableLiveData<Int>
 
     val buffer: MutableLiveData<String>
+    var notaFrekansi: MutableLiveData<Int>
+    var yuzdesi: MutableLiveData<Int>
+    var renk: MutableLiveData<Color>
+
+
 
 
 
@@ -59,6 +29,9 @@ class MainViewModel : ViewModel() {
         alertMesaji = MutableLiveData<String>("")
         pitch = MutableLiveData<Int>(0)
         buffer= MutableLiveData<String>("34")
+        notaFrekansi= MutableLiveData<Int>(0)
+        yuzdesi= MutableLiveData<Int>(0)
+        renk= MutableLiveData<Color>(kremRengi)
         audioEngine = MyAudioEngine(this)
     }
 
@@ -77,10 +50,31 @@ class MainViewModel : ViewModel() {
     }
 
     fun startTuning() {
-
         audioEngine.startTuning()
+    }
 
+//    fun updateYuzde(target:Int, ){
+//        var pairOfProximity=calculateProximity(target,pitch.value.toFloat())
+//        yuzdeSonuc.value=pairOfProximity.first.toInt()
+//        renkKodu.value=pairOfProximity.second
+//        var textColor = if (renkKodu.value==1) Color.Green else kremRengi
+//    }
 
+    //target: Gitar telinin olmasi gereken frekansi
+    //value: Gitar telinin olmasi gereken frekansi
+    fun updateYuzdeVeRenk(target: Int, pitch: Int) {
+        val difference = Math.abs(pitch - target)
+        // Yakınlık yüzdesini hesapla: (1 - fark / hedef) * 100
+        yuzdesi.value = ((1 - difference / target.toFloat()) * 100).coerceIn(0f, 100f).toInt()
+        // Eğer fark %10'dan küçükse 1, diğer durumda 0 döner
+        val renkKodu= if (difference <= target * 0.1f) 1 else 0
+        renk.value = if (renkKodu==1) Color.Green else kremRengi
+
+    }
+
+    fun updateNotaFrekansi(notaFrekansi: Int){
+        // this.pitch.value = pitch
+        this.notaFrekansi.postValue(notaFrekansi)
     }
 
 //    override fun onCleared() {

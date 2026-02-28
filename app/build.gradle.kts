@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.myguitartuner"
-        minSdk = 33
+        minSdk = 30
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -64,6 +64,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.9.5") // LiveData icin
     implementation("androidx.activity:activity-ktx:1.3.1")//RequestPermission icin
 
+    implementation("androidx.compose.material:material-icons-extended")
 
 
 }
