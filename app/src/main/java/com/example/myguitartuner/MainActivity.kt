@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
+import androidx.compose.ui.graphics.Color
 
 
 //import androidx.compose.ui.graphics.RenderEffect//Bu yanlis olan
@@ -100,7 +101,6 @@ class MainActivity : ComponentActivity() {
                 // Kullanıcı izni reddetti
             }
         }
-
     //Burasi sadece izinlerin kaydini kontrol ediyor, kayit durumuna gore istedigin metodu baslatirsin. Izin isteme ekranini requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) aciyor ve sonucu da kaydediyor.
     private fun checkMicrophonePermission() {
         when {
@@ -132,13 +132,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewModel) {
 
-    val buffer =
-        viewModel.buffer.observeAsState("")//Jetcompose'un en onemli aparati. viewModelde MutableLiveData ile olusturdugun degiskenleri burada dinleyebiliyoraun.
-    val alertMesaji =
-        viewModel.alertMesaji.observeAsState("")//Bunu kullanmazsan degisimleri takip edemezsin sadece mesela Text kendini yeilerse yenisini okuyabilirsin. Ama bunu kullnirsan buradaki degisime bagli degiskeni kimler dinliyorsa onlar otomatik kendileri yeniden calisir ve gucellmis olur.
     val pitch = viewModel.pitch.observeAsState(0)
     val yuzdesi = viewModel.yuzdesi.observeAsState(0)
     val renk = viewModel.renk.observeAsState()//0 kirmizi, 1 yesil
+    val activeString=viewModel.activeString.observeAsState()
 
     val density = LocalDensity.current
     val widthInDp = with(density) {
@@ -146,90 +143,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
     }
 
     val popupAcikMi = remember { mutableStateOf(false) }
-    //val aktifTelListesi = remember { mutableStateOf(emptyList<MyNoteDataClass>()) }
-    val enumString=remember { mutableStateOf(MyEnumString.SITRING1) }
 
-    val selectedBirinci = remember { mutableStateOf<MyNoteDataClass?>(null) }
-    val selectedIkinci = remember { mutableStateOf<MyNoteDataClass?>(null) }
-    val selectedUcuncu = remember { mutableStateOf<MyNoteDataClass?>(null) }
-    val selectedDorduncu = remember { mutableStateOf<MyNoteDataClass?>(null) }
-    val selectedBesinci = remember { mutableStateOf<MyNoteDataClass?>(null) }
-    val selectedAltinci = remember { mutableStateOf<MyNoteDataClass?>(null) }
-
-    //val suankiSelectedTel = remember { mutableStateOf<MutableState<MyNoteItem?>>(selectedBirinci) }
-
-
-    val string1 = listOf(
-        MyNoteDataClass(false,R.drawable.c_, "C4-261.63 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.cdiyez_, "C♯4 / D♭4-277.18 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.d_, "D4-293.66 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.ddiyez_, "D♯4 / E♭4-311.13 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(true,R.drawable.e_, "E4-329.63 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.f_, "F4-349.23 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.f_, "F♯4 / G♭4-369.99 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(false,R.drawable.g_, "G4-392.00 Hz", { selectedBirinci.value = it })
-    )
-    val string2 = listOf(
-        MyNoteDataClass(false,R.drawable.g_, "G3-196.00 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.gdiyez_, "G♯3 / A♭3-207.65 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.a_, "A3-220.00 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.adiyez_, "A♯3 / B♭3-233.08 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(true,R.drawable.b_, "B3-246.94 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.c_, "C4-261.63 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.cdiyez_, "C♯4 / D♭4-277.18 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(false,R.drawable.d_, "D4-293.66 Hz", { selectedIkinci.value = it })
-    )
-    val string3 = listOf(
-        MyNoteDataClass(false,R.drawable.ddiyez_, "D♯3 / E♭3-155.56 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.e_, "E3-164.81 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.f_, "F3-174.61 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.fdiyez_, "F♯3 / G♭3-185.00 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(true,R.drawable.g_, "G3-196.00 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.gdiyez_, "G♯3 / A♭3-207.65 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.a_, "A3-220.00 Hz") { selectedUcuncu.value = it },
-        MyNoteDataClass(false,R.drawable.adiyez_, "A♯3 / B♭3-233.08 Hz") { selectedUcuncu.value = it }
-    )
-    val string4 = listOf(
-        MyNoteDataClass(false,R.drawable.adiyez_, "B♭2-116.54 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.b_, "B2-123.47 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.c_, "C3-130.81 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.cdiyez_, "C♯3 / D♭3-138.59 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(true, R.drawable.d_, "D3-146.83 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.e_, "E3-164.81 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.f_, "F3-174.61 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(false,R.drawable.fdiyez_, "F♯3 / G♭3-185.00 Hz", { selectedDorduncu.value = it })
-    )
-    val string5 = listOf(
-        MyNoteDataClass(false,R.drawable.f_, "F2-87.31 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.fdiyez_, "F♯2 / G♭2-92.50 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.g_, "G2-98.00 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.gdiyez_, "G♯2 / A♭2-103.83 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(true,R.drawable.a_, "A2-110.00 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.b_, "B2-123.47 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.c_, "C3-130.81 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(false,R.drawable.cdiyez_, "C♯3 / D♭3-138.59 Hz", { selectedBesinci.value = it })
-    )
-    val string6 = listOf(
-        MyNoteDataClass(false,R.drawable.c_, "C2-65.41 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.cdiyez_, "C♯2 / D♭2-69.30 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.d_, "D2-73.42 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.ddiyez_, "D♯2 / E♭2-77.78 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(true, R.drawable.e_, "E2-82.41 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.f_, "F2-92.50 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.fdiyez_, "F♯2 / G♭2-98.00 Hz", { selectedAltinci.value = it }),
-        MyNoteDataClass(false,R.drawable.g_, "G2-103.83 Hz", { selectedAltinci.value = it })
-    )
-    val stringDefault = listOf(
-        MyNoteDataClass(true,R.drawable.e_, "E4-329.63 Hz", { selectedBirinci.value = it }),
-        MyNoteDataClass(true,R.drawable.b_, "B3-246.94 Hz", { selectedIkinci.value = it }),
-        MyNoteDataClass(true,R.drawable.g_, "G3-196.00 Hz", { selectedUcuncu.value = it }),
-        MyNoteDataClass(true,R.drawable.d_, "D3-146.83 Hz", { selectedDorduncu.value = it }),
-        MyNoteDataClass(true,R.drawable.a_, "A2-110.00 Hz", { selectedBesinci.value = it }),
-        MyNoteDataClass(true,R.drawable.e_, "E2-82.41 Hz", { selectedAltinci.value = it })
-    )
-
-
-  //  val seciliPopupinRengi = remember { mutableStateOf<Color>(siyahsi.copy(alpha = 0.8f)) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -237,20 +151,15 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
         }
     }
 
-    //En alttaki levele yani 1.levele tum ekrani kapsatan box. Tabana bir image koymak icin mecburdum
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        MyShaders.background()//Bunun en altta taban olmasini istedigim icin bundan sonra bir Column ya da Bir Box eklemem sart. Yani altina gelmemsi icine bir sonraki eklyecegim sey bunun ustunu ortebilecek bir seye ihtiyacim var. Box ust uste binecegi icin ortebilir.
-        //2.levele alt alta iki box ekemek icin Column lazim oldu.Eger BOx'larin height'larini ya da .weight'lerini ayarlamazsan ust uste binerler alttaki ezilir.
+        MyShaders.background()
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            //3.levele frekansi gosterecek kisim
-            Box(
-                modifier = Modifier.weight(50f)
-                // .border(2.dp, Color.Red)
-            ) {
+            Box( modifier = Modifier.weight(50f))
+            {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Image(
                         painter = painterResource(R.drawable.frekans),
@@ -290,31 +199,22 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
             }
 
-
-
-            Box(
-                modifier = Modifier
-                    // .border(2.dp, color = Color.Green)
-                    .weight(50f)
+            Box(modifier = Modifier.weight(50f)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterEnd)
                         .aspectRatio(417f / 220f)//Bunun sayesinde ust uste resim ekleme guzel calisyior
-                    // .border(4.dp, color = Color.Yellow)
                 ) {
                     Image(
                         painter = painterResource(R.drawable.gitar),
                         contentDescription = "Gitar",
-                        modifier = Modifier
-                            // .border(5.dp, Color.Blue)
-                            .fillMaxSize()//.aspectRatio(417f/220f)'ya verdigim deger resim ile ayni oldugu icin tam oturacak. Bu .fill yapilari contentin cercevesinibelirtiyor.
-                        ,
+                        modifier = Modifier.fillMaxSize() ,//.aspectRatio(417f/220f)'ya verdigim deger resim ile ayni oldugu icin tam oturacak. Bu .fill yapilari contentin cercevesinibelirtiyor.
                         contentScale = ContentScale.FillBounds//Ust uste resim koyacaksan alttaki resimde olmasi sart yoksa baska telefona gectiginde ustteki resimlerde kayma olur..Fit olursa resmin en boy orani korunur
                     )
                     Image(
-                        painter = painterResource(selectedBirinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(viewModel.selectedBirinci.value?.icon ?: R.drawable.e_),
                         contentDescription = "E 1.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -322,9 +222,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.015f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                   // suankiSelectedTel.value=selectedBirinci//DropdownItemMenusu siralandiginda onceden secili olan notanin rengini farkli gostermek icin
-
-
+                                    viewModel.updateActiveString(viewModel.string1)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -333,7 +231,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                     )
                     Image(
-                        painter = painterResource(selectedIkinci.value?.icon ?: R.drawable.b_),
+                        painter = painterResource(viewModel.selectedIkinci.value?.icon ?: R.drawable.b_),
                         contentDescription = "B 2.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
@@ -341,9 +239,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                   // suankiSelectedTel.value=selectedIkinci
-
-
+                                    viewModel.updateActiveString(viewModel.string2)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -351,7 +247,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         //alpha = if (expandedIkinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedUcuncu.value?.icon ?: R.drawable.g_),
+                        painter = painterResource(viewModel.selectedUcuncu.value?.icon ?: R.drawable.g_),
                         contentDescription = "G 3.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -360,8 +256,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                   // suankiSelectedTel.value=selectedUcuncu
-
+                                    viewModel.updateActiveString(viewModel.string3)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -369,7 +264,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         // alpha = if (expandedUcuncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedDorduncu.value?.icon ?: R.drawable.d_),
+                        painter = painterResource(viewModel.selectedDorduncu.value?.icon ?: R.drawable.d_),
                         contentDescription = "D 4.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -378,9 +273,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    //suankiSelectedTel.value=selectedDorduncu
-
-
+                                    viewModel.updateActiveString(viewModel.string4)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -388,7 +281,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         // alpha = if (expandedDorduncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedBesinci.value?.icon ?: R.drawable.a_),
+                        painter = painterResource(viewModel.selectedBesinci.value?.icon ?: R.drawable.a_),
                         contentDescription = "A 5.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
@@ -396,8 +289,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, 0.96f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    //suankiSelectedTel.value=selectedBesinci
-
+                                    viewModel.updateActiveString(viewModel.string5)
                                     popupAcikMi.value = true
                                 }
                             }, // Tıklama ile görünürlük değiştir
@@ -405,7 +297,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         //alpha = if (expandedBesinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedAltinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(viewModel.selectedAltinci.value?.icon ?: R.drawable.e_),
                         contentDescription = "E 6.tel",
                         modifier = Modifier
                             // .border(7.dp, Color.Blue)
@@ -414,9 +306,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    //suankiSelectedTel.value=selectedAltinci
-
-
+                                    viewModel.updateActiveString(viewModel.string6)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -435,9 +325,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
 
         }
-//        Box(modifier = Modifier.align(Alignment.Center)) {
-//
-//        }
+
 
         if (popupAcikMi.value) {
             Popup(
@@ -468,8 +356,8 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                 // 8 item'ın hepsi sığmazsa diye scroll ekliyoruz
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            if (aktifTelListesi.value.isNotEmpty()) {
-                                aktifTelListesi.value.forEach { item ->
+
+                                activeString.value?.forEach { item ->
                                     // Not: isSelected kontrolünde 'item' ile listenin kendisini kıyaslamışsın.
                                     // Muhtemelen seçili olanı tutan başka bir state ile kıyaslamalısın.
                                    // val isSelected =  suankiSelectedTel.value.value == item // Burayı kendi seçili state'inle güncelle
@@ -490,7 +378,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                                 //                                            )
 
                                                 Text(
-                                                    text = item.label,
+                                                    text = item.frekans,
                                                     color = kremRengi,
                                                     style = TextStyle(
                                                         fontWeight = FontWeight.Bold,
@@ -499,15 +387,15 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                                 )
                                             }
                                         },
-                                        modifier = Modifier.background(if (item.isSelected) siyahsi.copy(alpha = 1f) else siyahsi.copy(alpha = 0.3f)),
+                                        modifier = Modifier.background(if (item.highlighting) Color.Black else siyahsi.copy(alpha = 0.3f)),
                                         onClick = {
                                             item.onSelected(item)
-                                            MyEnumString.updateIsSelected(enumString,item,string1,string2,string3,string4,string5,string6)
+                                            viewModel.updateHighlighting(item)
                                             popupAcikMi.value = false
                                         }
 
                                     )
-                                }
+
                             }
                         }
                     }
@@ -515,55 +403,9 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
             }
         }
 
-//        DropdownMenu(
-//            // modifier = Modifier.size(300.dp)
-//
-//            expanded = dropdownAcikMi.value,
-//            onDismissRequest = { dropdownAcikMi.value = false },
-//             offset = DpOffset(x = 0.dp, y = 0.dp)
-//        ) {
-//
-//            if (hangiTelinNotalarininlistesi.value.isNotEmpty()){
-//                hangiTelinNotalarininlistesi.value.forEach { item ->
-//                    val isSelected = hangiTelinNotalarininlistesi.value == item
-//
-//                    DropdownMenuItem(text = {
-//                        Row(verticalAlignment = Alignment.CenterVertically) {
-//                            // Add image here (replace "your_image" with actual resource)
-//                            Image(
-//                                painter = painterResource(id = item.icon), // Replace with your image
-//                                contentDescription = "Icon", modifier = Modifier.size(24.dp)
-//                            )
-//                            Spacer(modifier = Modifier.width(8.dp))
-//                            val animatedColor by animateColorAsState(
-//                                targetValue = if (isSelected) Color.Yellow else Color.Black
-//                            )
-//                            Text(
-//                                text = item.label,
-//                                color = if (isSelected) Color.Yellow else Color.Black, // Text color change on selection
-//                                style = TextStyle(
-//                                    fontWeight = FontWeight.Bold, fontSize = 16.sp
-//                                )
-//                            )
-//                        }
-//                    }, onClick = {
-//                        item.onSelected(item)
-//                        dropdownAcikMi.value= false
-//
-//                    })
-//                }}
-//        }
+
     }
 
 
 }
 
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun FrontEndPreview() {
-//    MyGuitarTunerTheme {
-//        FrontEnd(name = "Preview Name", modifier = Modifier)
-//    }
-//}

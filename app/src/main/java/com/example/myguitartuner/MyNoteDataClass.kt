@@ -1,3 +1,3 @@
 package com.example.myguitartuner
 
-data class MyNoteDataClass(var isSelected: Boolean, val icon:Int, val label: String, val onSelected:(MyNoteDataClass)->Unit)
+data class MyNoteDataClass(val nameEnum: MyEnumString, var highlighting: Boolean, val icon:Int, val frekans: String, val onSelected:(MyNoteDataClass)->Unit)
