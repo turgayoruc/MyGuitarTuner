@@ -15,7 +15,7 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
     private lateinit var audioRecord: AudioRecord
     val sampleRate = 44100
 
-    fun startTuning() {
+    fun startTuningInEngine() {
 
        // val bufferSize=8192
         val bufferSize = AudioRecord.getMinBufferSize(

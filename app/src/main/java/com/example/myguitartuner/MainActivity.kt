@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 
 //import androidx.compose.ui.graphics.RenderEffect//Bu yanlis olan
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -109,7 +110,7 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 viewModel.updateAlertMesaji("mic zaten izin verilmis")
                 // viewModel.startTuning()
-                viewModel.startTuning()
+                viewModel.startTuningInViewModel()
 
 
             }
@@ -145,8 +146,10 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
     val popupAcikMi = remember { mutableStateOf(false) }
 
 
+
+    //Burayi LaunchedEffect(pitch.value) seklinde deneyecegim
     LaunchedEffect(Unit) {
-        while (true) {
+          while (true) {
             viewModel.updateYuzdeVeRenk(82, pitch.value); delay(10)
         }
     }
@@ -222,7 +225,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.015f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string1)
+                                    viewModel.updateActiveString(viewModel.string1.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -239,7 +242,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string2)
+                                    viewModel.updateActiveString(viewModel.string2.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -256,7 +259,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string3)
+                                    viewModel.updateActiveString(viewModel.string3.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -273,7 +276,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string4)
+                                    viewModel.updateActiveString(viewModel.string4.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -289,7 +292,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, 0.96f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string5)
+                                    viewModel.updateActiveString(viewModel.string5.value)
                                     popupAcikMi.value = true
                                 }
                             }, // Tıklama ile görünürlük değiştir
@@ -306,7 +309,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string6)
+                                    viewModel.updateActiveString(viewModel.string6.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -391,6 +394,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                         onClick = {
                                             item.onSelected(item)
                                             viewModel.updateHighlighting(item)
+                                            viewModel.saveNotesinViewModelTryCatch(item)
                                             popupAcikMi.value = false
                                         }
 
