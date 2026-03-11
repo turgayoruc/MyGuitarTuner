@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.MutableLiveData
 
 
 import com.example.myguitartuner.ui.theme.MyGuitarTunerTheme
@@ -136,7 +137,21 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
     val pitch = viewModel.pitch.observeAsState(0)
     val yuzdesi = viewModel.yuzdesi.observeAsState(0)
     val renk = viewModel.renk.observeAsState()//0 kirmizi, 1 yesil
-    val activeString=viewModel.activeString.observeAsState()
+    val activeString = viewModel.activeString.observeAsState()//0 kirmizi, 1 yesil
+    val selectedBirinci=viewModel.selectedBirinci.observeAsState()
+    val selectedIkinci=viewModel.selectedIkinci.observeAsState()
+    val selectedUcuncu=viewModel.selectedUcuncu.observeAsState()
+    val selectedDorduncu=viewModel.selectedDorduncu.observeAsState()
+    val selectedBesinci=viewModel.selectedBesinci.observeAsState()
+    val selectedAltinci=viewModel.selectedAltinci.observeAsState()
+    val string1=viewModel.string1.observeAsState(emptyList<MyNoteDataClass>())
+    val string2=viewModel.string2.observeAsState(emptyList<MyNoteDataClass>())
+    val string3=viewModel.string3.observeAsState(emptyList<MyNoteDataClass>())
+    val string4=viewModel.string4.observeAsState(emptyList<MyNoteDataClass>())
+    val string5=viewModel.string5.observeAsState(emptyList<MyNoteDataClass>())
+    val string6=viewModel.string6.observeAsState(emptyList<MyNoteDataClass>())
+
+
 
     val density = LocalDensity.current
     val widthInDp = with(density) {
@@ -217,7 +232,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         contentScale = ContentScale.FillBounds//Ust uste resim koyacaksan alttaki resimde olmasi sart yoksa baska telefona gectiginde ustteki resimlerde kayma olur..Fit olursa resmin en boy orani korunur
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedBirinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(selectedBirinci.value?.icon ?: R.drawable.e_),
                         contentDescription = "E 1.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -225,7 +240,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.015f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string1.value)
+                                    viewModel.updateActiveString(string1.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -234,7 +249,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedIkinci.value?.icon ?: R.drawable.b_),
+                        painter = painterResource(selectedIkinci.value?.icon ?: R.drawable.b_),
                         contentDescription = "B 2.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
@@ -242,7 +257,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, -0.98f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string2.value)
+                                    viewModel.updateActiveString(string2.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -250,7 +265,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         //alpha = if (expandedIkinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedUcuncu.value?.icon ?: R.drawable.g_),
+                        painter = painterResource(selectedUcuncu.value?.icon ?: R.drawable.g_),
                         contentDescription = "G 3.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -259,7 +274,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string3.value)
+                                    viewModel.updateActiveString(string3.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -267,7 +282,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         // alpha = if (expandedUcuncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedDorduncu.value?.icon ?: R.drawable.d_),
+                        painter = painterResource(selectedDorduncu.value?.icon ?: R.drawable.d_),
                         contentDescription = "D 4.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -276,7 +291,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string4.value)
+                                    viewModel.updateActiveString(string4.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -284,7 +299,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         // alpha = if (expandedDorduncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedBesinci.value?.icon ?: R.drawable.a_),
+                        painter = painterResource(selectedBesinci.value?.icon ?: R.drawable.a_),
                         contentDescription = "A 5.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
@@ -292,7 +307,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.4f, 0.96f))
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string5.value)
+                                    viewModel.updateActiveString(string5.value)
                                     popupAcikMi.value = true
                                 }
                             }, // Tıklama ile görünürlük değiştir
@@ -300,7 +315,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         //alpha = if (expandedBesinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(viewModel.selectedAltinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(selectedAltinci.value?.icon ?: R.drawable.e_),
                         contentDescription = "E 6.tel",
                         modifier = Modifier
                             // .border(7.dp, Color.Blue)
@@ -309,7 +324,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             //.size(35.dp, 55.dp)
                             .clickable {
                                 if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(viewModel.string6.value)
+                                    viewModel.updateActiveString(string6.value)
                                     popupAcikMi.value = true
                                 }
                             },
@@ -393,8 +408,9 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                         modifier = Modifier.background(if (item.highlighting) Color.Black else siyahsi.copy(alpha = 0.3f)),
                                         onClick = {
                                             item.onSelected(item)
-                                            viewModel.updateHighlighting(item)
                                             viewModel.saveNotesinViewModelTryCatch(item)
+                                            viewModel.updateHighlighting(item)
+
                                             popupAcikMi.value = false
                                         }
 
