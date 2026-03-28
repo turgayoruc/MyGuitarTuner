@@ -1,4 +1,4 @@
-package com.example.myguitartuner
+package com.example.myguitartuner.ui.theme
 
 import android.graphics.RenderEffect
 import android.graphics.RuntimeShader
@@ -20,8 +20,9 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import com.example.myguitartuner.R
 
-object MyShaders {
+object TunerShaders {
 
     ////Shaderlar sadece  minSdk = 33 olunca kodlanabiliyor.
     //    //Shadr icin 3 sey lazim. 1.si shader, 2.si infiniteTransition ve 3.su de time
@@ -50,7 +51,7 @@ object MyShaders {
             return image.eval(uv * resolution);
         }
         """
-                )
+                             )
             }
 
 
@@ -63,24 +64,24 @@ object MyShaders {
                     animation = tween(
                         100_000,
                         easing = LinearEasing
-                    )
-                )
-            )
+                                     )
+                                                  )
+                                                       )
 
 
             //3.Asama Image metoduna degerlerin yerlestirilmesi ve .setFloatUniform saesinde uniform degiskenlerinin degerlerinin atanmasi.
             Image(
                 painter = painterResource(R.drawable.background),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
+                contentScale = ContentScale.Companion.Crop,
+                modifier = Modifier.Companion
                     .fillMaxSize()
                     .scale(1.1f)
                     .graphicsLayer {
                         shader.setFloatUniform(
                             "time",
                             time
-                        )//setFloatUniform() metodu Key/Value turunde calisiyor. Key dedigin Shader'a yazdigin kodun icindeki degisken.Hatta basinda da uniform yaziyor, biz de burada oradaki uniformlarin degerlerini atiyoruz.. Yani Unitydeki properties gibi bir durum var degiskenleri buradan biz gonderiyoruz. Shader da oaradan karsiliyor.
+                                              )//setFloatUniform() metodu Key/Value turunde calisiyor. Key dedigin Shader'a yazdigin kodun icindeki degisken.Hatta basinda da uniform yaziyor, biz de burada oradaki uniformlarin degerlerini atiyoruz.. Yani Unitydeki properties gibi bir durum var degiskenleri buradan biz gonderiyoruz. Shader da oaradan karsiliyor.
                         shader.setFloatUniform("resolution", size.width, size.height)
                         renderEffect = RenderEffect.createRuntimeShaderEffect(shader, "image")
                             .asComposeRenderEffect()
@@ -89,35 +90,39 @@ object MyShaders {
 
         }
 
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+       // @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         @Composable
         fun backgroundTransparentShader() {
             //1.Asama: Shader'in yazilmasi
             val shader = remember {
-                RuntimeShader(
-                    """
-                    uniform shader image;
-        uniform float time;
-        uniform float2 resolution;
-
-        half4 main(float2 fragCoord) {
-            float2 uv = fragCoord / resolution;
-
-            // Resmin gerçek rengini al
-            half4 imgColor = image.eval(fragCoord);
-
-            float wave = sin((uv.y * 80.0) + time) * 0.9 + 0.9;
-
-            // Dalga alpha kontrolü
-            float alpha = wave * 400;
-
-            // Resmin kendi alpha'sını koru, üstüne efekt uygula
-            imgColor.a *= alpha;
-
-            return imgColor;
-        }
-        """
-                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    RuntimeShader(
+                        """
+                        uniform shader image;
+            uniform float time;
+            uniform float2 resolution;
+    
+            half4 main(float2 fragCoord) {
+                float2 uv = fragCoord / resolution;
+    
+                // Resmin gerçek rengini al
+                half4 imgColor = image.eval(fragCoord);
+    
+                float wave = sin((uv.y * 80.0) + time) * 0.9 + 0.9;
+    
+                // Dalga alpha kontrolü
+                float alpha = wave * 400;
+    
+                // Resmin kendi alpha'sını koru, üstüne efekt uygula
+                imgColor.a *= alpha;
+    
+                return imgColor;
+            }
+            """
+                                 )
+                } else {
+                    TODO("VERSION.SDK_INT < TIRAMISU")
+                }
             }
 
 
@@ -130,28 +135,28 @@ object MyShaders {
                     animation = tween(
                         1000_000,
                         easing = LinearEasing
-                    )
-                )
+                                     )
+                                                  )
             )
 
 
             //3.Asama Image metoduna degerlerin yerlestirilmesi ve .setFloatUniform saesinde uniform degiskenlerinin degerlerinin atanmasi.
-            Image(
-                painter = painterResource(R.drawable.background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scale(1.1f)
-                    .graphicsLayer {
-                        shader.setFloatUniform(
-                            "time",
-                            time
-                        )//setFloatUniform() metodu Key/Value turunde calisiyor. Key dedigin Shader'a yazdigin kodun icindeki degisken.Hatta basinda da uniform yaziyor, biz de burada oradaki uniformlarin degerlerini atiyoruz.. Yani Unitydeki properties gibi bir durum var degiskenleri buradan biz gonderiyoruz. Shader da oaradan karsiliyor.
-                        shader.setFloatUniform("resolution", size.width, size.height)
-                        renderEffect = RenderEffect.createRuntimeShaderEffect(shader, "image")
-                            .asComposeRenderEffect()
-                    })
+           Image(
+               painter = painterResource(R.drawable.background),
+               contentDescription = null,
+               contentScale = ContentScale.Companion.Crop,
+               modifier = Modifier.Companion
+                   .fillMaxSize()
+                   .scale(1.1f)
+                   .graphicsLayer {
+                       shader.setFloatUniform(
+                           "time",
+                           time
+                                             )//setFloatUniform() metodu Key/Value turunde calisiyor. Key dedigin Shader'a yazdigin kodun icindeki degisken.Hatta basinda da uniform yaziyor, biz de burada oradaki uniformlarin degerlerini atiyoruz.. Yani Unitydeki properties gibi bir durum var degiskenleri buradan biz gonderiyoruz. Shader da oaradan karsiliyor.
+                       shader.setFloatUniform("resolution", size.width, size.height)
+                       renderEffect = RenderEffect.createRuntimeShaderEffect(shader, "image")
+                           .asComposeRenderEffect()
+                   })
 
 
         }
@@ -160,11 +165,11 @@ object MyShaders {
             Image(
                 painter = painterResource(R.drawable.background),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
+                contentScale = ContentScale.Companion.Crop,
+                modifier = Modifier.Companion
                     .fillMaxSize()
                     .scale(1.1f)
-                   )
+                 )
         }
 
 

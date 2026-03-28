@@ -1,4 +1,4 @@
-package com.example.myguitartuner
+package com.example.myguitartuner.data.audio
 
 import android.annotation.SuppressLint
 import android.media.AudioFormat
@@ -6,23 +6,29 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class MyAudioEngine(private val viewModel: MainViewModel) {
+class AudioTunerEngine {
+
+    // Veriyi dışarıya akıtacak olan Flow. MVI icin normal callBack'i sildik. yerine callbackFollow kullnacagiz.
+    private val _rawPitchFlow = MutableSharedFlow<Double>(replay = 0)
+    val rawPitchFlow = _rawPitchFlow.asSharedFlow()
 
     private lateinit var audioRecord: AudioRecord
     val sampleRate = 44100
 
-    fun startTuningInEngine() {
+
+    fun startTuningInEngine(scope: CoroutineScope) {
 
        // val bufferSize=8192
         val bufferSize = AudioRecord.getMinBufferSize(
             sampleRate, // sampleRateInHz
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT//Ham veriyi kullanacagimizi soyluyoruz.
-        )
+                                                     )
         @SuppressLint("MissingPermission")//Ben zaten izni kontrol ediyorum
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
@@ -30,13 +36,13 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             bufferSize
-        )
+                                 )
         //Microfonu aktif hale getiriyor ama bir veriyi alip da bir yere kaydetmiyor.O isi Thread ile yapiyoruz.
         audioRecord.startRecording()
         // Gelen sesi kaydedecegimiz tampon bolgemizi onceden ayarliyoruz. Biz buraya read yardimiyla analog sesi okuyup onceden ayarladigimiz ayarlarda digital verisini cekecegiz.
         val audioBuffer = ShortArray(bufferSize)
 
-        CoroutineScope(Dispatchers.IO).launch{
+        scope.launch(Dispatchers.IO){
             while (isActive){
                 var readSize=0
                 readSize= audioRecord.read(audioBuffer, 0, bufferSize)//metod geri döndüğü anda okuma işlemi bitmiştir.yani resultun ilk atanan deger olmamasi iyi bir kontrol.
@@ -47,19 +53,27 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
                     }
                     removeDC(signal)
                     val pitch = autoCorrelate(signal, sampleRate)
-
-                    withContext(Dispatchers.Main){
-                          viewModel.updatePitch(pitch.toInt())
-                       // viewModel.updateAudioBuffer(pitchHz.toString())
-//                      for (i in 0..200){
-//                          delay(50)
-//                          viewModel.updatePitch(i.toInt())}
-                    }
+                    _rawPitchFlow.emit(pitch) //view'e gitmak yerine Flow ile veriyi firlatacagimiz icin ayriyetten withContext(Dispatchers.Main)'e ihtiyacimiz yok.
+//                    withContext(Dispatchers.Main){
+//
+//                        //MVI mimarisi icin yani tek yonlu mimari icin viewModel'e uradan erisim saglamayacagiz. ViewModel burdan veriyi dinleyecek.
+//                          //viewModel.updatePitch(pitch.toInt())
+//                       // viewModel.updateAudioBuffer(pitchHz.toString())
+////                      for (i in 0..200){
+////                          delay(50)
+////                          viewModel.updatePitch(i.toInt())}
+//                    }
                 }
             }
 
         }
     }
+    fun stopEngine() {
+        audioRecord.stop()
+        audioRecord.release()
+       // audioRecord = null
+    }
+
     fun removeDC(signal: DoubleArray) {
         val mean = signal.average()
         for (i in signal.indices) {
@@ -112,30 +126,6 @@ class MyAudioEngine(private val viewModel: MainViewModel) {
         // Gürültüde bu oran çok düşer. 0.70 güvenli bir sınır.
         return if (confidence > 0.70 && bestLag != -1) {sonGecerliDeger} else { 0.0 }
     }
-
-//    fun autoCorrelate(signal: DoubleArray, sampleRate: Int): Double {
-//        val size = signal.size
-//        var bestLag = 0
-//        var bestCorr = 0.0
-//
-//        // Gitar frekansları için lag sınırı
-//        val minLag = sampleRate / 1200   // ~36
-//        val maxLag = sampleRate / 80     // ~551
-//
-//        for (lag in minLag..maxLag) {
-//            var sum = 0.0
-//            for (i in 0 until size - lag) {
-//                sum += signal[i] * signal[i + lag]
-//            }
-//
-//            if (sum > bestCorr) {
-//                bestCorr = sum
-//                bestLag = lag
-//            }
-//        }
-//
-//        return if (bestLag == 0) 0.0 else sampleRate.toDouble() / bestLag
-//    }
 
 
 

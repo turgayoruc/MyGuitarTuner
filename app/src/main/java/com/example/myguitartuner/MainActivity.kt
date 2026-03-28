@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
@@ -38,8 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.graphics.Color
@@ -47,7 +45,6 @@ import androidx.compose.ui.graphics.Color
 
 //import androidx.compose.ui.graphics.RenderEffect//Bu yanlis olan
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -58,21 +55,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 
 import com.example.myguitartuner.ui.theme.MyGuitarTunerTheme
-import com.example.myguitartuner.ui.theme.kremRengi
+import com.example.myguitartuner.ui.theme.TunerShaders
 import com.example.myguitartuner.ui.theme.siyahsi
-import kotlinx.coroutines.delay
+import com.example.myguitartuner.ui.tuner.TunerIntent
+import com.example.myguitartuner.ui.tuner.TunerViewModel
 
 
 import kotlin.getValue
 
 class MainActivity : ComponentActivity() {
 
-    val viewModel: MainViewModel by viewModels()
-
+    val viewModel: TunerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -87,12 +84,7 @@ class MainActivity : ComponentActivity() {
         }
 
     }
-
-
-    //isGranted eger kullanici microfona izin verdiyse true oluyor eger izin vermezse de false oluyor.
-    //ilk onay tiklamasinda yapilmasini istediklerini buraya, program tekrar acildiginda mic izni tekrar iztemeyecekse de yapilmasi gerekenleri ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO ) == PackageManager.PERMISSION_GRANTED -> {} icine yazmalisin
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 // viewModel.startTuning()
 
@@ -109,20 +101,19 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(
                 this, Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED -> {
-                viewModel.updateAlertMesaji("mic zaten izin verilmis")
-                // viewModel.startTuning()
-                viewModel.startTuningInViewModel()
+
+                viewModel.onIntent(TunerIntent.StartEngine)
 
 
             }
 
             shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) -> {
-                viewModel.updateAlertMesaji("mic izin verilmemis")
+
                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)//ilk istege onay verilmediyse ikinci baslatmada da bi yeniistek iyi olur.
             }
 
             else -> {
-                viewModel.updateAlertMesaji("mic ilk defa izin istenmis")
+
                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)//Izin isteme ekranini  aciyor ve sonucu da kaydediyor.(While using the app) ekranini aciyor yani
             }
         }
@@ -132,45 +123,31 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewModel) {
+fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: TunerViewModel) {
 
-    val pitch = viewModel.pitch.observeAsState(0)
-    val yuzdesi = viewModel.yuzdesi.observeAsState(0)
-    val renk = viewModel.renk.observeAsState()//0 kirmizi, 1 yesil
-    val activeString = viewModel.activeString.observeAsState()//0 kirmizi, 1 yesil
-    val selectedBirinci=viewModel.selectedBirinci.observeAsState()
-    val selectedIkinci=viewModel.selectedIkinci.observeAsState()
-    val selectedUcuncu=viewModel.selectedUcuncu.observeAsState()
-    val selectedDorduncu=viewModel.selectedDorduncu.observeAsState()
-    val selectedBesinci=viewModel.selectedBesinci.observeAsState()
-    val selectedAltinci=viewModel.selectedAltinci.observeAsState()
-    val string1=viewModel.string1.observeAsState(emptyList<MyNoteDataClass>())
-    val string2=viewModel.string2.observeAsState(emptyList<MyNoteDataClass>())
-    val string3=viewModel.string3.observeAsState(emptyList<MyNoteDataClass>())
-    val string4=viewModel.string4.observeAsState(emptyList<MyNoteDataClass>())
-    val string5=viewModel.string5.observeAsState(emptyList<MyNoteDataClass>())
-    val string6=viewModel.string6.observeAsState(emptyList<MyNoteDataClass>())
-
-
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val density = LocalDensity.current
-    val widthInDp = with(density) {
-        LocalWindowInfo.current.containerSize.width.toDp()
-    }
+    val windowInfo = LocalWindowInfo.current
+    val widthInDp = with(density) { windowInfo.containerSize.width.toDp() }
+    LaunchedEffect(widthInDp) { viewModel.onIntent(TunerIntent.UpdateScreenWidth(widthInDp.value)) }
 
-    val popupAcikMi = remember { mutableStateOf(false) }
+  //  val popupAcikMi = remember { mutableStateOf(false) }
 
 
 
-    //Burayi LaunchedEffect(pitch.value) seklinde deneyecegim
-    LaunchedEffect(Unit) {
-          while (true) {
-            viewModel.updateYuzdeVeRenk(82, pitch.value); delay(10)
-        }
-    }
+//    //Burayi LaunchedEffect(pitch.value) seklinde deneyecegim
+//    LaunchedEffect(Unit) {
+//          while (true) {
+//            //viewModel.updateYuzdeVeRenk(82, pitch.value); delay(10)
+//              viewModel.onIntent(Intent.UpdateYuzde(82))
+//              delay(100)
+//              //viewModel.onIntent(Intent.UpdateRenk())
+//        }
+//    }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        MyShaders.background()
+        TunerShaders.background()
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -183,7 +160,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         painter = painterResource(R.drawable.frekans),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(widthInDp * 0.8f)
+                            .size(state.screenWidthDp.dp * 0.8f)
                             .align(alignment = Alignment.Center)
                         // .border(2.dp, Color.Red)
                         ,
@@ -196,8 +173,8 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             modifier = Modifier.align(Alignment.CenterHorizontally),
 
 
-                            text = yuzdesi.value.toString(), style = TextStyle(
-                                color = renk.value ?: kremRengi,
+                            text = state.yuzde.toString(), style = TextStyle(
+                                color = state.renk,
                                 fontSize = 72.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -206,7 +183,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             modifier = Modifier.align(Alignment.CenterHorizontally), text = "%",
 
                             style = TextStyle(
-                                color = renk.value ?: kremRengi,
+                                color = state.renk,
                                 fontSize = 72.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -232,16 +209,18 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                         contentScale = ContentScale.FillBounds//Ust uste resim koyacaksan alttaki resimde olmasi sart yoksa baska telefona gectiginde ustteki resimlerde kayma olur..Fit olursa resmin en boy orani korunur
                     )
                     Image(
-                        painter = painterResource(selectedBirinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(state.selectedBirinci.icon ),
                         contentDescription = "E 1.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
                             .fillMaxSize(0.15f)//Boyutu da bununla ayarla .size ile farkina bak
                             .align(BiasAlignment(-0.015f, -0.98f))
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string1.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                    //viewModel.updateActiveString(string1.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string1))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
+                                    //popupAcikMi.value = true
                                 }
                             },
                         contentScale = ContentScale.Fit, // Görseli boyutlandırarak yerleştirme
@@ -249,23 +228,24 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
 
                     )
                     Image(
-                        painter = painterResource(selectedIkinci.value?.icon ?: R.drawable.b_),
+                        painter = painterResource(state.selectedIkinci.icon ?: R.drawable.b_),
                         contentDescription = "B 2.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
                             .fillMaxSize(0.15f)//Boyutu da bununla ayarla .size ile farkina bak
                             .align(BiasAlignment(-0.4f, -0.98f))
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string2.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                   // viewModel.updateActiveString(string2.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string2))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
                                 }
                             },
                         contentScale = ContentScale.Fit, // Görseli boyutlandırarak yerleştirme
                         //alpha = if (expandedIkinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedUcuncu.value?.icon ?: R.drawable.g_),
+                        painter = painterResource(state.selectedUcuncu.icon ?: R.drawable.g_),
                         contentDescription = "G 3.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -273,16 +253,17 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.78f, -1f))
 
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string3.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                    //viewModel.updateActiveString(string3.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string3))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
                                 }
                             },
                         contentScale = ContentScale.Fit, // Görseli boyutlandırarak yerleştirme
                         // alpha = if (expandedUcuncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedDorduncu.value?.icon ?: R.drawable.d_),
+                        painter = painterResource(state.selectedDorduncu.icon ),
                         contentDescription = "D 4.tel",
                         modifier = Modifier
                             // .border(2.dp, Color.Blue)
@@ -290,32 +271,34 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.78f, 1f))
                             //.size(35.dp, 55.dp)
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string4.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                   // viewModel.updateActiveString(string4.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string4))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
                                 }
                             },
                         contentScale = ContentScale.Fit, // Görseli boyutlandırarak yerleştirme
                         // alpha = if (expandedDorduncu.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedBesinci.value?.icon ?: R.drawable.a_),
+                        painter = painterResource(state.selectedBesinci.icon ),
                         contentDescription = "A 5.tel",
                         modifier = Modifier
                             //.border(2.dp, Color.Blue)
                             .fillMaxSize(0.15f)//Boyutu da bununla ayarla .size ile farkina bak
                             .align(BiasAlignment(-0.4f, 0.96f))
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string5.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                   // viewModel.updateActiveString(string5.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string5))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
                                 }
                             }, // Tıklama ile görünürlük değiştir
                         contentScale = ContentScale.Fit, // Görseli boyutlandırarak yerleştirme
                         //alpha = if (expandedBesinci.value) 1f else 0f
                     )
                     Image(
-                        painter = painterResource(selectedAltinci.value?.icon ?: R.drawable.e_),
+                        painter = painterResource(state.selectedAltinci.icon),
                         contentDescription = "E 6.tel",
                         modifier = Modifier
                             // .border(7.dp, Color.Blue)
@@ -323,9 +306,10 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                             .align(BiasAlignment(-0.015f, 0.98f))
                             //.size(35.dp, 55.dp)
                             .clickable {
-                                if (popupAcikMi.value == false) {
-                                    viewModel.updateActiveString(string6.value)
-                                    popupAcikMi.value = true
+                                if (!state.popupAcikMi) {
+                                    //viewModel.updateActiveString(string6.value)
+                                    viewModel.onIntent(TunerIntent.UpdateActiveString(state.string6))
+                                    viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(true))
                                 }
                             },
 
@@ -336,8 +320,8 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                 }
             }
             Text(
-                text = pitch.value.toString(), style = TextStyle(
-                    color = renk.value ?: kremRengi, fontSize = 72.sp, fontWeight = FontWeight.Bold
+                text = state.pitch.toString(), style = TextStyle(
+                    color = state.renk , fontSize = 72.sp, fontWeight = FontWeight.Bold
                 )
             )
 
@@ -345,11 +329,11 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
         }
 
 
-        if (popupAcikMi.value) {
+        if (state.popupAcikMi) {
             Popup(
                 // Ekranın tam ortasına hizalar
                 alignment = Alignment.Center,
-                onDismissRequest = { popupAcikMi.value = false },
+                onDismissRequest = { viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(false)) },
                 properties = PopupProperties(
                     focusable = true, // Dışarı tıklandığında kapanması ve geri tuşu için şart
                     dismissOnClickOutside = true,
@@ -375,7 +359,7 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                 .verticalScroll(rememberScrollState())
                         ) {
 
-                                activeString.value?.forEach { item ->
+                                state.activeString.forEach { item ->
                                     // Not: isSelected kontrolünde 'item' ile listenin kendisini kıyaslamışsın.
                                     // Muhtemelen seçili olanı tutan başka bir state ile kıyaslamalısın.
                                    // val isSelected =  suankiSelectedTel.value.value == item // Burayı kendi seçili state'inle güncelle
@@ -396,8 +380,8 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                                 //                                            )
 
                                                 Text(
-                                                    text = item.frekans,
-                                                    color = kremRengi,
+                                                    text = item.frekans.toString(),
+                                                    color = state.kremRengi,
                                                     style = TextStyle(
                                                         fontWeight = FontWeight.Bold,
                                                         fontSize = 16.sp
@@ -407,11 +391,13 @@ fun FrontEnd(name: String, modifier: Modifier = Modifier, viewModel: MainViewMod
                                         },
                                         modifier = Modifier.background(if (item.highlighting) Color.Black else siyahsi.copy(alpha = 0.3f)),
                                         onClick = {
-                                            item.onSelected(item)
-                                            viewModel.saveNotesinViewModelTryCatch(item)
-                                            viewModel.updateHighlighting(item)
+//                                            item.onSelected(item)
+//                                            viewModel.saveNotesinViewModelTryCatch(item)
+//                                            viewModel.updateHighlighting(item)
+                                            viewModel.onIntent(TunerIntent.UpdateHighlighting(item))
+                                            viewModel.onIntent(TunerIntent.UpdateSelectedAllString(item))
 
-                                            popupAcikMi.value = false
+                                            viewModel.onIntent(TunerIntent.UpdatePopupAcikMi(false))
                                         }
 
                                     )
