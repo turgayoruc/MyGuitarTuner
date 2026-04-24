@@ -2,6 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    //Room ve Hilt kutuphanesi icin ortak bir kutuphane lazim
+    id("com.google.devtools.ksp")
+
+    //Hilt icin
+    id("com.google.dagger.hilt.android")
+
 }
 
 android {
@@ -32,6 +38,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+
+        //Hilt uses Java 8 features. To enable Java 8 in your project, add the following to the app/build.gradle file
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -67,6 +77,17 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("com.google.code.gson:gson:2.8.8") //Json dosyalari ile calismak icin.
+
+    //Room kutuphanesi
+    val room_version = "2.8.4"
+    implementation("androidx.room:room-runtime:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+
+    //Hilt kutuphanesi
+    implementation("com.google.dagger:hilt-android:2.57.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+
+
 
 
 }
